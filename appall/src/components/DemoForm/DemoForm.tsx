@@ -4,8 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Send, CheckCircle } from 'lucide-react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -15,9 +14,7 @@ const demoFormSchema = z.object({
   adresse: z.string().min(5, 'L\'adresse doit contenir au moins 5 caractères'),
   email: z.string().email('Email invalide'),
   message: z.string().min(10, 'Le message doit contenir au moins 10 caractères'),
-  pack: z.enum(['starter', 'team', 'enterprise'], {
-    required_error: 'Veuillez choisir un pack'
-  })
+  pack: z.enum(['starter', 'team', 'enterprise'], 'Veuillez choisir un pack')
 });
 
 type DemoFormData = z.infer<typeof demoFormSchema>;
@@ -43,11 +40,16 @@ export const DemoForm: React.FC<DemoFormProps> = ({ isOpen, onClose }) => {
   const onSubmit = async (data: DemoFormData) => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'demo-requests'), {
-        ...data,
-        createdAt: new Date(),
-        status: 'pending'
-      });
+      const { error } = await supabase.from('demo-requests').insert([
+        {
+          ...data,
+          createdat: new Date().toISOString(),
+          status: 'pending'
+        }
+      ]);
+      if (error) {
+        throw error;
+      }
       setIsSubmitted(true);
       reset();
       setTimeout(() => {
