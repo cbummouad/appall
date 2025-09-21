@@ -66,4 +66,31 @@ export default defineConfig([
     },
   },
 ])
+
+---
+
+## Environment Variables for Firebase
+
+This project uses Firebase for backend services. To configure Firebase, you need to set up environment variables in a `.env` file in the project root.
+
+Create a `.env` file with the following variables:
+
 ```
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
+VITE_FIREBASE_PROJECT_ID=your_project_id_here
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id_here
+VITE_FIREBASE_APP_ID=your_app_id_here
+```
+
+Replace the placeholder values with your Firebase project credentials.
+
+Vite automatically loads environment variables prefixed with `VITE_` from `.env` files.
+
+For production builds, you can create a `.env.production` file with the corresponding production credentials.
+
+Ensure you do not commit your `.env` files with sensitive information to version control. Add `.env` and `.env.production` to your `.gitignore` if not already ignored.
+
+Create a `.env` file with the following variables:
+
