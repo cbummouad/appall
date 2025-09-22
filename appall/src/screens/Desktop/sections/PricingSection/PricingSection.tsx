@@ -151,7 +151,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ className = "" }
   };
 
   return (
-    <section className={`w-full flex flex-col gap-16 lg:gap-20 py-16 lg:py-24 relative z-10 overflow-hidden ${className}`}> {/* Added overflow-hidden */}
+    <section id="pricing" className={`w-full flex flex-col gap-16 lg:gap-20 py-16 lg:py-24 relative z-10 overflow-hidden ${className}`}> {/* Added overflow-hidden */}
       {/* Background radial gradient */}
       <div className="absolute inset-0 bg-radial-gradient from-blue-50/50 via-transparent to-purple-50/50 opacity-40 animate-fade-in -z-20"></div>
 
