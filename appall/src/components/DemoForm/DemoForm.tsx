@@ -22,9 +22,10 @@ type DemoFormData = z.infer<typeof demoFormSchema>;
 interface DemoFormProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultPack?: 'starter' | 'team' | 'enterprise';
 }
 
-export const DemoForm: React.FC<DemoFormProps> = ({ isOpen, onClose }) => {
+export const DemoForm: React.FC<DemoFormProps> = ({ isOpen, onClose, defaultPack }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -34,7 +35,10 @@ export const DemoForm: React.FC<DemoFormProps> = ({ isOpen, onClose }) => {
     formState: { errors },
     reset
   } = useForm<DemoFormData>({
-    resolver: zodResolver(demoFormSchema)
+    resolver: zodResolver(demoFormSchema),
+    defaultValues: {
+      pack: defaultPack
+    }
   });
 
   const onSubmit = async (data: DemoFormData) => {
@@ -51,7 +55,7 @@ export const DemoForm: React.FC<DemoFormProps> = ({ isOpen, onClose }) => {
         throw error;
       }
       setIsSubmitted(true);
-      reset();
+      reset({ pack: defaultPack });
       setTimeout(() => {
         setIsSubmitted(false);
         onClose();

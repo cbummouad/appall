@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react"; // Removed useMemo as it's not being used directly here
 import { motion, AnimatePresence } from "framer-motion";
 
 // TypeScript interfaces for better type safety
@@ -20,13 +20,13 @@ const HERO_CONSTANTS = {
   TRANSITION_DELAY: 0.3,
 } as const;
 
-// Enhanced screenshots data with descriptions
+// Screenshots data without fixed styles, as they will be dynamic
 const screenshots: Screenshot[] = [
   {
-    id: "my-docs",
-    alt: "My docs",
-    src: "/my-docs-1.png",
-    description: "Interface de gestion des documents"
+    id: "desktop",
+    alt: "Desktop",
+    src: "/desktop---13--1--1-1.png",
+    description: "Vue d'ensemble du bureau"
   },
   {
     id: "workplace-1",
@@ -35,10 +35,10 @@ const screenshots: Screenshot[] = [
     description: "Espace de travail collaboratif"
   },
   {
-    id: "desktop",
-    alt: "Desktop",
-    src: "/desktop---13--1--1-1.png",
-    description: "Vue d'ensemble du bureau"
+    id: "my-docs",
+    alt: "My docs",
+    src: "/my-docs-1.png",
+    description: "Interface de gestion des documents"
   },
   {
     id: "workplace-2",
@@ -69,6 +69,7 @@ const useSlider = (totalSlides: number, interval: number = HERO_CONSTANTS.SLIDE_
 
   const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
+    setIsAutoPlaying(false); // Pause autoplay on manual interaction
   }, []);
 
   useEffect(() => {
@@ -93,13 +94,17 @@ const SliderDots: React.FC<{
   total: number;
   current: number;
   onDotClick: (index: number) => void;
-}> = ({ total, current, onDotClick }) => {
+  setIsAutoPlaying: (value: boolean) => void;
+}> = ({ total, current, onDotClick, setIsAutoPlaying }) => {
   return (
     <div className="flex justify-center space-x-2 mt-6">
       {Array.from({ length: total }, (_, index) => (
         <button
           key={index}
-          onClick={() => onDotClick(index)}
+          onClick={() => {
+            onDotClick(index);
+            setIsAutoPlaying(false); // Pause autoplay on manual dot click
+          }}
           className={`w-3 h-3 rounded-full transition-all duration-300 ${
             index === current
               ? "bg-blue-600 scale-110"
@@ -114,60 +119,180 @@ const SliderDots: React.FC<{
 
 // Main slider component
 const ScreenshotSlider: React.FC = () => {
-  const { currentSlide, goToSlide, setIsAutoPlaying } = useSlider(screenshots.length);
+  const { currentSlide, goToSlide, setIsAutoPlaying, nextSlide, prevSlide } = useSlider(screenshots.length);
+
+  const getScreenshotStyles = useCallback((index: number) => {
+    const total = screenshots.length;
+    const centerIndex = currentSlide;
+    let distance = index - centerIndex;
+
+    // Normalize distance to handle wrapping around the slider (e.g., from last to first)
+    if (distance > total / 2) {
+      distance -= total;
+    } else if (distance < -total / 2) {
+      distance += total;
+    }
+
+    const absDistance = Math.abs(distance);
+
+    // Default values
+    let x: string | number = 0; // x can be a string (percentage) or number (px)
+    let y: string | number = 0; // y can be a string (percentage) or number (px)
+    let rotate = 0; // Framer motion rotate expects a number (degrees)
+    let scale = 1;
+    let opacity = 1;
+    let zIndex = total; // zIndex expects a number
+
+    // Specific adjustments for the visual style in the image
+    if (distance === 0) { // Center image
+      x = 0;
+      y = 0;
+      rotate = 0;
+      scale = 1;
+      opacity = 1;
+      zIndex = total;
+    } else if (distance === -1) { // Immediate left
+      x = "-10%";
+      y = "5%";
+      rotate = -8;
+      scale = 0.9;
+      opacity = 0.9;
+      zIndex = total - 1;
+    } else if (distance === 1) { // Immediate right
+      x = "10%";
+      y = "5%";
+      rotate = 8;
+      scale = 0.9;
+      opacity = 0.9;
+      zIndex = total - 1;
+    } else if (distance <= -2) { // Further left
+      x = "-25%";
+      y = "10%";
+      rotate = -15;
+      scale = 0.8;
+      opacity = 0.8;
+      zIndex = total - 2;
+    } else if (distance >= 2) { // Further right
+      x = "25%";
+      y = "10%";
+      rotate = 15;
+      scale = 0.8;
+      opacity = 0.8;
+      zIndex = total - 2;
+    }
+
+    // Ensure opacity doesn't go below 0
+    opacity = Math.max(0, opacity);
+
+    return { x, y, rotate, scale, opacity, zIndex };
+  }, [currentSlide, screenshots.length]);
+
 
   return (
-    <div className="relative">
-      <div
-        className="relative h-[697px] bg-gradient-to-br from-blue-50 to-indigo-100 rounded-[25px] overflow-hidden shadow-2xl"
+    <div className="relative w-full h-[697px]"
         onMouseEnter={() => setIsAutoPlaying(false)}
         onMouseLeave={() => setIsAutoPlaying(true)}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, scale: 0.95, rotateY: -15 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            exit={{ opacity: 0, scale: 1.05, rotateY: 15 }}
-            transition={{
-              duration: HERO_CONSTANTS.ANIMATION_DURATION,
-              ease: "easeInOut"
-            }}
-            className="absolute inset-0 flex items-center justify-center p-8"
-          >
-            <motion.img
-              src={screenshots[currentSlide].src}
-              alt={screenshots[currentSlide].alt}
-              className="max-w-full max-h-full object-contain rounded-[20px] shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              loading="lazy"
-            />
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <AnimatePresence initial={false}>
+          {screenshots.map((screenshot, index) => {
+            const styles = getScreenshotStyles(index);
 
-            {/* Floating description */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg backdrop-blur-sm"
-            >
-              <p className="text-sm font-medium">
-                {screenshots[currentSlide].description}
-              </p>
-            </motion.div>
-          </motion.div>
+            // Only render completely invisible slides for AnimatePresence management
+            if (styles.opacity === 0 && index !== currentSlide) {
+                return null;
+            }
+
+            return (
+              <motion.div
+                key={screenshot.id}
+                initial={{ opacity: 0, scale: 0.5, y: "50%" }} // Initial state when mounted first time
+                animate={{
+                  x: styles.x,
+                  y: styles.y,
+                  rotate: styles.rotate,
+                  scale: styles.scale,
+                  opacity: styles.opacity,
+                  zIndex: styles.zIndex,
+                }}
+                exit={{ opacity: 0, scale: 0.5, y: "50%" }} // Exit animation
+                transition={{
+                  duration: HERO_CONSTANTS.ANIMATION_DURATION,
+                  ease: "easeInOut",
+                }}
+                className="absolute w-[80%] h-full flex items-center justify-center pointer-events-none" // Adjust width as needed
+              >
+                <img
+                  src={screenshot.src}
+                  alt={screenshot.alt}
+                  className="max-w-full max-h-full object-contain rounded-[20px] shadow-lg"
+                  loading="lazy"
+                />
+                {/* Floating description for the current (center) image */}
+                {index === currentSlide && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    className="absolute bottom-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg backdrop-blur-sm"
+                  >
+                    <p className="text-sm font-medium">{screenshot.description}</p>
+                  </motion.div>
+                )}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
-
-        {/* Gradient overlays for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5 pointer-events-none" />
       </div>
+
+      {/* Navigation Buttons */}
+      <button
+        onClick={() => {
+          prevSlide();
+          setIsAutoPlaying(false); // Pause autoplay
+        }}
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 z-50"
+        aria-label="Previous slide"
+      >
+        {/* Left Arrow SVG */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          stroke="currentColor"
+          className="w-6 h-6 text-gray-700"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+
+      <button
+        onClick={() => {
+          nextSlide();
+          setIsAutoPlaying(false); // Pause autoplay
+        }}
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 z-50"
+        aria-label="Next slide"
+      >
+        {/* Right Arrow SVG */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2.5}
+          stroke="currentColor"
+          className="w-6 h-6 text-gray-700"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
 
       <SliderDots
         total={screenshots.length}
         current={currentSlide}
         onDotClick={goToSlide}
+        setIsAutoPlaying={setIsAutoPlaying}
       />
     </div>
   );

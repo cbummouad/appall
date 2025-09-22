@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "../../../../components/ui/card";
+import { DemoForm } from "../../../../components/DemoForm/DemoForm";
 
 // TypeScript interfaces for better type safety
 interface FeatureCardData {
@@ -147,8 +148,9 @@ const CardContentText: React.FC<{ cardData: FeatureCardData }> = ({ cardData }) 
 );
 
 // Demo button component matching the design
-const DemoButton: React.FC = () => (
+const DemoButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <motion.button
+    onClick={onClick}
     className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 z-20"
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
@@ -161,7 +163,7 @@ const DemoButton: React.FC = () => (
 );
 
 // Centered demo button component
-const CenteredDemoButton: React.FC = () => (
+const CenteredDemoButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <motion.div
     className="flex justify-center mt-12"
     initial={{ opacity: 0, y: 20 }}
@@ -170,6 +172,7 @@ const CenteredDemoButton: React.FC = () => (
     viewport={{ once: true }}
   >
     <motion.button
+      onClick={onClick}
       className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
@@ -237,6 +240,11 @@ const FeatureCard: React.FC<{ cardData: FeatureCardData; delay: number }> = ({ c
 );
 
 export const MainContentSection: React.FC<MainContentSectionProps> = ({ className = "" }) => {
+  const [isDemoFormOpen, setIsDemoFormOpen] = useState(false);
+
+  const openDemoForm = () => setIsDemoFormOpen(true);
+  const closeDemoForm = () => setIsDemoFormOpen(false);
+
   return (
     <section id="about" className={`w-full relative py-16 lg:py-24 ${className}`}>
       {/* Enhanced header with better styling */}
@@ -294,11 +302,14 @@ export const MainContentSection: React.FC<MainContentSectionProps> = ({ classNam
         </div>
 
         {/* Centered demo button between bottom cards */}
-        <CenteredDemoButton />
+        <CenteredDemoButton onClick={openDemoForm} />
 
         {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 via-transparent to-purple-50/20 rounded-3xl -z-10" />
       </div>
+
+      {/* Demo form modal */}
+      <DemoForm isOpen={isDemoFormOpen} onClose={closeDemoForm} />
     </section>
   );
 };
